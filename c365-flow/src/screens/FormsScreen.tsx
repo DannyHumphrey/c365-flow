@@ -9,7 +9,7 @@ import { getFormTemplatesCached } from "../offline/templatesCache";
 import { createInstanceSmart } from "../offline/instanceSmart";
 import { FormDefinition } from "../api/formsApi";
 
-export default function FormsScreen() {
+export default function FormsScreen({ navigation }: any) {
   const netInfo = useNetInfo();
   const online = Boolean(netInfo.isConnected);
   const [templates, setTemplates] = useState<any[]>([]);
@@ -19,12 +19,13 @@ export default function FormsScreen() {
   }, [online]);
 
   const handleCreate = async (tpl: FormDefinition) => {
-    await createInstanceSmart(
+    const res = await createInstanceSmart(
       tpl.formType || tpl.formDefinitionId,
       tpl.version,
       {},
       online
     );
+    navigation.navigate('FormInstance', { id: res.id });
   };
 
   return (
