@@ -57,3 +57,41 @@ export async function createInstance(
 
   return { ...data, etag, idempotencyKey: key };
 }
+
+export async function getInstance(id: string | number) {
+  const { data, etag } = await apiFetch(`/form-instances/${id}`);
+  return { ...data, etag };
+}
+
+export async function saveSection({ id, sectionKey, patch, etag, idempotencyKey }: {
+  id: string | number;
+  sectionKey: string;
+  patch: any[];
+  etag?: string;
+  idempotencyKey?: string;
+}) {
+  const { data, etag: newEtag } = await apiFetch(`/form-instances/${id}/sections/${sectionKey}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(etag ? { 'If-Match': etag } : {}),
+      ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+    },
+    body: JSON.stringify(patch),
+  });
+  return { ...data, etag: newEtag };
+}
+
+export async function transitionInstance({ id, transitionKey, etag }: {
+  id: string | number;
+  transitionKey: string;
+  etag?: string;
+}) {
+  const { data, etag: newEtag } = await apiFetch(`/form-instances/${id}/transitions/${transitionKey}`, {
+    method: 'POST',
+    headers: {
+      ...(etag ? { 'If-Match': etag } : {}),
+    },
+  });
+  return { ...data, etag: newEtag };
+}

@@ -1,32 +1,42 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import { apiFetch } from '../api/client';
+import { getInstance } from '../api/formsApi';
 import { K } from './keys';
 
-export async function resolveToServerId(id: string) {
-  if (id.startsWith('tmp_')) {
-    const mapped = await AsyncStorage.getItem(K.IdMap(id));
-    return mapped || id;
-  }
+export async function resolveToServerId(id: string | number) {
   return id;
 }
 
-export async function getInstanceSmart(id: string | number, online = true) {
-  const realId = await resolveToServerId(String(id));
-  if (online && !realId.startsWith('tmp_')) {
-    const { data, etag } = await apiFetch(`/form-instances/${realId}`);
-    await AsyncStorage.setItem(
-      K.InstanceMeta(realId),
-      JSON.stringify({ ...data, etag })
-    );
-    return { ...data, etag };
-  }
-
-  const meta = await AsyncStorage.getItem(K.InstanceMeta(realId));
-  const data = await AsyncStorage.getItem(K.InstanceData(realId));
+export async function getInstanceSmart(id: string | number) {
+  try {
+    if (typeof id === 'number' || (typeof id === 'string' && !id.startsWith('tmp_'))) {
+      const res = await getInstance(id);
+      await AsyncStorage.setItem(
+        K.InstanceMeta(id),
+        JSON.stringify({
+          id: res.formInstanceId ?? id,
+          formDefinitionId: res.formDefinitionId,
+          currentState: res.currentState,
+          version: res.version,
+          etag: res.etag,
+        })
+      );
+      await AsyncStorage.setItem(K.InstanceData(id), JSON.stringify(res.data));
+      return res;
+    }
+  } catch {}
+  const [metaRaw, dataRaw] = await Promise.all([
+    AsyncStorage.getItem(K.InstanceMeta(id)),
+    AsyncStorage.getItem(K.InstanceData(id)),
+  ]);
+  const meta = metaRaw ? JSON.parse(metaRaw) : null;
+  const data = dataRaw ? JSON.parse(dataRaw) : {};
+  if (!meta) throw new Error('Instance not available offline');
   return {
-    meta: meta ? JSON.parse(meta) : null,
-    data: data ? JSON.parse(data) : null,
+    formInstanceId: meta.id,
+    formDefinitionId: meta.formDefinitionId ?? null,
+    currentState: meta.currentState,
+    version: meta.version,
+    data,
+    etag: meta.etag,
   };
 }
-
