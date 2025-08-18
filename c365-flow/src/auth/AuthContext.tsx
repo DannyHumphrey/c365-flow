@@ -4,12 +4,12 @@ import React, {
   useContext,
   useEffect,
   useState,
-} from 'react';
-import jwt_decode from 'jwt-decode';
+} from "react";
+import { jwtDecode } from "jwt-decode";
 
-import { login as loginApi } from './authApi';
-import { saveToken, getToken, deleteToken } from './secureStore';
-import { getFormTemplatesCached } from '../offline/templatesCache';
+import { login as loginApi } from "./authApi";
+import { saveToken, getToken, deleteToken } from "./secureStore";
+import { getFormTemplatesCached } from "../offline/templatesCache";
 
 interface JwtPayload {
   exp: number;
@@ -35,7 +35,7 @@ export async function authFetch(
 ): Promise<Response> {
   const headers = new Headers(init.headers);
   if (currentToken) {
-    headers.set('Authorization', `Bearer ${currentToken}`);
+    headers.set("Authorization", `Bearer ${currentToken}`);
   }
   return fetch(input, { ...init, headers });
 }
@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const stored = await getToken();
       if (stored) {
         try {
-          const payload = jwt_decode<JwtPayload>(stored);
+          const payload = jwtDecode<JwtPayload>(stored);
           if (payload.exp * 1000 > Date.now()) {
             setToken(stored);
             currentToken = stored;
@@ -98,7 +98,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('AuthContext missing');
+  if (!ctx) throw new Error("AuthContext missing");
   return ctx;
 }
-

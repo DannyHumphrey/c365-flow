@@ -1,10 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { v4 as uuidv4 } from 'uuid';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { v4 as uuidv4 } from "uuid";
 
-import { createInstance } from '../api/formsApi';
-import { K } from './keys';
-import { CreateJob, LocalInstanceMeta } from './types';
-import { getFormTemplatesCached } from './templatesCache';
+import { createInstance } from "../api/formsApi";
+import { K } from "./keys";
+import { CreateJob, LocalInstanceMeta } from "./types";
+import { getFormTemplatesCached } from "./templatesCache";
 
 export async function createInstanceSmart(
   formType: string,
@@ -24,7 +24,10 @@ export async function createInstanceSmart(
     };
     await AsyncStorage.setItem(K.InstanceMeta(id), JSON.stringify(meta));
     if (initialData) {
-      await AsyncStorage.setItem(K.InstanceData(id), JSON.stringify(initialData));
+      await AsyncStorage.setItem(
+        K.InstanceData(id),
+        JSON.stringify(initialData)
+      );
     }
     return { id, etag: res.etag };
   }
@@ -40,7 +43,10 @@ export async function createInstanceSmart(
   };
   await AsyncStorage.setItem(K.InstanceMeta(tmpId), JSON.stringify(meta));
   if (initialData) {
-    await AsyncStorage.setItem(K.InstanceData(tmpId), JSON.stringify(initialData));
+    await AsyncStorage.setItem(
+      K.InstanceData(tmpId),
+      JSON.stringify(initialData)
+    );
   }
 
   const job: CreateJob = {
@@ -56,6 +62,5 @@ export async function createInstanceSmart(
   await AsyncStorage.setItem(K.CreateQueue, JSON.stringify(queue));
   await AsyncStorage.setItem(K.PatchQueue(tmpId), JSON.stringify([]));
 
-  return { id: tmpId, etag: 'local' };
+  return { id: tmpId, etag: "local" };
 }
-
