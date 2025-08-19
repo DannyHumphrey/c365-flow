@@ -1,43 +1,197 @@
-import React from 'react';
-import { Text, TextInput, View } from 'react-native';
+import React, { memo } from 'react';
+import type { LayoutChangeEvent } from 'react-native';
+import { FormField } from './types';
+import { evaluateVisibleWhen, getNestedValue } from '../utils/formUtils';
+import { TextField } from './implementations/TextField';
+import { BooleanField } from './implementations/BooleanField';
+import { NumberField } from './implementations/NumberField';
+import { CurrencyField } from './implementations/CurrencyField';
+import { SelectField } from './implementations/SelectField';
+import { MultiSelectField } from './implementations/MultiSelectField';
+import { BarcodeField } from './implementations/BarcodeField';
+import { SignatureField } from './implementations/SignatureField';
+import { PhotoField } from './implementations/PhotoField';
+import { DateField } from './implementations/DateField';
+import { TimeField } from './implementations/TimeField';
+import { DateTimeField } from './implementations/DateTimeField';
+import { ImageSelectField } from './implementations/ImageSelectField';
 
-interface Props {
-  field: any;
-  path: (string|number)[];
-  formState: any;
-  localContext: any;
-  activeDateKey: any;
-  setActiveDateKey: (k: any) => void;
-  readOnly: boolean;
-  error: any;
-  registerFieldPosition: any;
-  handleChange: (path: (string|number)[], value: any) => void;
-}
+export type FieldRendererProps = {
+  field: FormField;
+  path: (string | number)[];
+  formState: Record<string, any>;
+  localContext?: Record<string, any>;
+  activeDateKey: string | null;
+  setActiveDateKey: React.Dispatch<React.SetStateAction<string | null>>;
+  handleChange: (path: (string | number)[], value: any) => void;
+  error?: string;
+  readOnly?: boolean;
+  registerFieldPosition: (key: string, y: number) => void;
+};
 
-function getValue(obj: any, path: (string|number)[]) {
-  return path.reduce((acc, key) => (acc ? acc[key as any] : undefined), obj);
-}
-
-export function FieldRenderer({ field, path, formState, readOnly, handleChange }: Props) {
-  const value = getValue(formState, path);
-  if (field.type === 'text' || field.type === 'string') {
-    return (
-      <View style={{ marginBottom: 8 }}>
-        {field.label && <Text style={{ marginBottom: 4 }}>{field.label}</Text>}
-        <TextInput
-          value={value ?? ''}
-          editable={!readOnly}
-          onChangeText={(t) => handleChange(path, t)}
-          style={{ borderWidth: 1, borderColor: '#ccc', padding: 4 }}
-        />
-      </View>
-    );
-  }
-  // fallback
-  return (
-    <View style={{ marginBottom: 8 }}>
-      {field.label && <Text style={{ marginBottom: 4 }}>{field.label}</Text>}
-      <Text>{value ?? ''}</Text>
-    </View>
+export const FieldRenderer = memo(function FieldRenderer({
+  field,
+  path,
+  formState,
+  localContext,
+  activeDateKey,
+  setActiveDateKey,
+  handleChange,
+  error,
+  readOnly,
+  registerFieldPosition,
+}: FieldRendererProps) {
+  const key = path.join('.');
+  const isVisible = React.useMemo(
+    () => evaluateVisibleWhen((field as any).visibleWhen, formState, localContext),
+    [formState, localContext, field]
   );
-}
+  const value = getNestedValue(formState, path);
+  const onLayout = (e: LayoutChangeEvent) => {
+    registerFieldPosition(key, e.nativeEvent.layout.y);
+  };
+
+  if (!isVisible) return null;
+
+  const common = {
+    fieldKey: key,
+    onLayout,
+    error,
+    readOnly,
+    activeDateKey,
+    setActiveDateKey,
+  } as any;
+
+  switch (field.type) {
+    case 'text':
+      return (
+        <TextField
+          {...common}
+          field={field}
+          value={value}
+          onChange={(v: string) => handleChange(path, v)}
+        />
+      );
+    case 'boolean':
+      return (
+        <BooleanField
+          {...common}
+          field={field}
+          value={!!value}
+          onChange={(v: boolean) => handleChange(path, v)}
+        />
+      );
+    case 'number':
+      return (
+        <NumberField
+          {...common}
+          field={field}
+          keyboardType="numeric"
+          value={value}
+          onChange={(v: string) => handleChange(path, v)}
+        />
+      );
+    case 'decimal':
+      return (
+        <NumberField
+          {...common}
+          field={field}
+          keyboardType="decimal-pad"
+          value={value}
+          onChange={(v: string) => handleChange(path, v)}
+        />
+      );
+    case 'currency':
+      return (
+        <CurrencyField
+          {...common}
+          field={field}
+          value={value}
+          onChange={(v: string) => handleChange(path, v)}
+        />
+      );
+    case 'select':
+      return (
+        <SelectField
+          {...common}
+          field={field}
+          value={value}
+          onChange={(v: string) => handleChange(path, v)}
+        />
+      );
+    case 'multiselect':
+      return (
+        <MultiSelectField
+          {...common}
+          field={field}
+          value={Array.isArray(value) ? value : []}
+          onChange={(v: string[]) => handleChange(path, v)}
+        />
+      );
+    case 'barcode':
+      return (
+        <BarcodeField
+          {...common}
+          field={field}
+          value={value}
+          onChange={(v: string) => handleChange(path, v)}
+        />
+      );
+    case 'date':
+      return (
+        <DateField
+          {...common}
+          field={field}
+          value={value}
+          onChange={(v: string) => handleChange(path, v)}
+        />
+      );
+    case 'time':
+      return (
+        <TimeField
+          {...common}
+          field={field}
+          value={value}
+          onChange={(v: string) => handleChange(path, v)}
+        />
+      );
+    case 'datetime':
+      return (
+        <DateTimeField
+          {...common}
+          field={field}
+          value={value}
+          onChange={(v: string) => handleChange(path, v)}
+        />
+      );
+    case 'photo':
+      return (
+        <PhotoField
+          {...common}
+          field={field}
+          value={Array.isArray(value) ? value : []}
+          onChange={(v: string[]) => handleChange(path, v)}
+        />
+      );
+    case 'imageSelect':
+      return (
+        <ImageSelectField
+          {...common}
+          field={field}
+          value={value}
+          onChange={(v: string) => handleChange(path, v)}
+        />
+      );
+    case 'signature':
+      return (
+        <SignatureField
+          {...common}
+          field={field}
+          value={value}
+          onChange={(v: any) => handleChange(path, v)}
+        />
+      );
+    default:
+      return null;
+  }
+});
