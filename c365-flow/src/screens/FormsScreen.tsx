@@ -12,7 +12,7 @@ import { FormDefinition } from "../api/formsApi";
 export default function FormsScreen({ navigation }: any) {
   const netInfo = useNetInfo();
   const online = Boolean(netInfo.isConnected);
-  const [templates, setTemplates] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<FormDefinition[]>([]);
 
   useEffect(() => {
     getFormTemplatesCached(online).then(setTemplates);
@@ -25,7 +25,7 @@ export default function FormsScreen({ navigation }: any) {
       {},
       online
     );
-    navigation.navigate('FormInstance', { id: res.id });
+    navigation.navigate("FormInstance", { id: res.id });
   };
 
   return (
@@ -36,7 +36,9 @@ export default function FormsScreen({ navigation }: any) {
         <>
           <FlatList
             data={templates}
-            keyExtractor={(item) => String(item.id || item.formType)}
+            keyExtractor={(item) =>
+              String(item.formDefinitionId || item.formType)
+            }
             renderItem={({ item }) => (
               <List.Item title={item.name || item.formType} />
             )}

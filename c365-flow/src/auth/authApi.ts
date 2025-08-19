@@ -1,7 +1,7 @@
-import { API_BASE } from "../api/client";
+const AUTH_BASE = process.env.EXPO_PUBLIC_API_BASE || "http://localhost:3000";
 
 export async function login(email: string, password: string): Promise<string> {
-  const r = await fetch(`${API_BASE}/Authentication/login`, {
+  const r = await fetch(`${AUTH_BASE}/Authentication/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ Username: email, Password: password }),

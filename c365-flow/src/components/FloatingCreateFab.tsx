@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { FAB } from "react-native-paper";
+import { FormDefinition } from "../api/formsApi";
 
 interface Props {
-  templates: any[];
-  onSelect: (tpl: any) => void;
+  templates: FormDefinition[];
+  onSelect: (tpl: FormDefinition) => void;
 }
 
 export default function FloatingCreateFab({ templates, onSelect }: Props) {
   const [open, setOpen] = useState(false);
-
   return (
     templates && (
       <FAB.Group

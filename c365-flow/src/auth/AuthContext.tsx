@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = useCallback(async (email: string, password: string) => {
     const t = await loginApi(email, password);
     await saveToken(t);
-    const payload = jwt_decode<JwtPayload>(t);
+    const payload = jwtDecode<JwtPayload>(t);
     setToken(t);
     currentToken = t;
     setRoles(payload.roles || []);

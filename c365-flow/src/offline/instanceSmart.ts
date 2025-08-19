@@ -13,6 +13,7 @@ export async function createInstanceSmart(
   online = true
 ) {
   if (online) {
+    debugger;
     const res = await createInstance(formType, formVersion, initialData);
     const id = String(res.formInstanceId);
     const meta: LocalInstanceMeta = {

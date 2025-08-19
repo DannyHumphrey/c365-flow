@@ -1,6 +1,5 @@
-import { v4 as uuidv4 } from "uuid";
-
 import { apiFetch } from "./client";
+import { v4 as uuidv4 } from "uuid";
 
 export interface FormDefinition {
   formDefinitionId: string; // "6"
@@ -25,7 +24,7 @@ export interface WorkflowConfig {
 }
 
 export const getFormTemplates = async () => {
-  const r = await apiFetch<FormDefinition[]>("/api/formTemplates");
+  const r = await apiFetch<FormDefinition[]>("/formTemplates");
   return r.data;
 };
 
@@ -36,6 +35,7 @@ export async function createInstance(
   idempotencyKey?: string
 ) {
   const key = idempotencyKey ?? uuidv4();
+
   const { data, etag } = await apiFetch<{
     formInstanceId: number;
     formDefinitionId: string;
@@ -63,35 +63,51 @@ export async function getInstance(id: string | number) {
   return { ...data, etag };
 }
 
-export async function saveSection({ id, sectionKey, patch, etag, idempotencyKey }: {
+export async function saveSection({
+  id,
+  sectionKey,
+  patch,
+  etag,
+  idempotencyKey,
+}: {
   id: string | number;
   sectionKey: string;
   patch: any[];
   etag?: string;
   idempotencyKey?: string;
 }) {
-  const { data, etag: newEtag } = await apiFetch(`/form-instances/${id}/sections/${sectionKey}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(etag ? { 'If-Match': etag } : {}),
-      ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
-    },
-    body: JSON.stringify(patch),
-  });
+  const { data, etag: newEtag } = await apiFetch(
+    `/form-instances/${id}/sections/${sectionKey}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...(etag ? { "If-Match": etag } : {}),
+        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+      },
+      body: JSON.stringify(patch),
+    }
+  );
   return { ...data, etag: newEtag };
 }
 
-export async function transitionInstance({ id, transitionKey, etag }: {
+export async function transitionInstance({
+  id,
+  transitionKey,
+  etag,
+}: {
   id: string | number;
   transitionKey: string;
   etag?: string;
 }) {
-  const { data, etag: newEtag } = await apiFetch(`/form-instances/${id}/transitions/${transitionKey}`, {
-    method: 'POST',
-    headers: {
-      ...(etag ? { 'If-Match': etag } : {}),
-    },
-  });
+  const { data, etag: newEtag } = await apiFetch(
+    `/form-instances/${id}/transitions/${transitionKey}`,
+    {
+      method: "POST",
+      headers: {
+        ...(etag ? { "If-Match": etag } : {}),
+      },
+    }
+  );
   return { ...data, etag: newEtag };
 }
