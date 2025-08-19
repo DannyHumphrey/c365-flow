@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, View } from "react-native";
-import { Appbar, Button } from "react-native-paper";
+import { Button } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import { v4 as uuidv4 } from "uuid";
@@ -130,7 +130,7 @@ export default function FormInstanceScreen({ route, navigation }: any) {
           queue.shift();
           await AsyncStorage.setItem(queueKey, JSON.stringify(queue));
           setInstance({
-            ...updated,
+            ...instance,
             data: updated.data,
             currentState: updated.state,
             etag: updated.etag,
@@ -178,7 +178,7 @@ export default function FormInstanceScreen({ route, navigation }: any) {
           idempotencyKey: idem,
         });
         setInstance({
-          ...updated,
+          ...instance,
           data: updated.data,
           currentState: updated.state,
           etag: updated.etag,

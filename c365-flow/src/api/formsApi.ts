@@ -79,13 +79,13 @@ export async function saveSection({
   const { data, etag: newEtag } = await apiFetch(
     `/form-instances/${id}/sections/${sectionKey}`,
     {
-      method: "PATCH",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(etag ? { "If-Match": etag } : {}),
         ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
       },
-      body: JSON.stringify(patch),
+      body: JSON.stringify({ patch: patch }),
     }
   );
   return { ...data, etag: newEtag };
