@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { FormField } from './types';
-import { evaluateVisibleWhen, getNestedValue } from '../utils/formUtils';
+import { getNestedValue } from '../utils/formUtils';
 import { TextField } from './implementations/TextField';
 import { BooleanField } from './implementations/BooleanField';
 import { NumberField } from './implementations/NumberField';
@@ -42,16 +42,10 @@ export const FieldRenderer = memo(function FieldRenderer({
   registerFieldPosition,
 }: FieldRendererProps) {
   const key = path.join('.');
-  const isVisible = React.useMemo(
-    () => evaluateVisibleWhen((field as any).visibleWhen, formState, localContext),
-    [formState, localContext, field]
-  );
   const value = getNestedValue(formState, path);
   const onLayout = (e: LayoutChangeEvent) => {
     registerFieldPosition(key, e.nativeEvent.layout.y);
   };
-
-  if (!isVisible) return null;
 
   const common = {
     fieldKey: key,

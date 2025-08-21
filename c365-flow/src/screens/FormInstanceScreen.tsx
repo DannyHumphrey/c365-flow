@@ -9,6 +9,7 @@ import { applyPatch } from "fast-json-patch";
 import InstanceFormRenderer, {
   InstanceFormRendererRef,
 } from "../components/formRenderer/InstanceFormRenderer";
+import { collectRequiredMissing } from "../components/formRenderer/logic/validateRequired";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { getToken } from "../services/authService";
 import {
@@ -209,6 +210,11 @@ export default function FormInstanceScreen({ route, navigation }: any) {
     if (!instance) return;
     // ensure debounced edits are flushed
     await rendererRef.current?.flushAll();
+    const missing = collectRequiredMissing(schema, instance?.data || {}, editableSections);
+    if (missing.length) {
+      Alert.alert('Missing required fields', missing.join('\n'));
+      return;
+    }
     if (String(id).startsWith("tmp_")) {
       Alert.alert(
         "Pending sync",
