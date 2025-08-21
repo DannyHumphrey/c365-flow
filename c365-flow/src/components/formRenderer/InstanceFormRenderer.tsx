@@ -6,7 +6,8 @@ import { FieldRenderer } from './fields/FieldRenderer';
 import { styles } from './styles';
 import type { FormSection } from './fields/types';
 import { getNestedValue } from './utils/formUtils';
-import { useSectionPatchBuffer } from '../../hooks/useSectionPatchBuffer';
+import { useSectionPatchBuffer, ptrFromPath } from '../../hooks/useSectionPatchBuffer';
+import { evalCondition, defaultValueForType } from './logic/conditions';
 
 type Props = {
   schema: FormSection[];
@@ -72,7 +73,33 @@ const InstanceFormRenderer = forwardRef<InstanceFormRendererRef, Props>(function
   ) => fields.map(f => {
     const fieldPath = [...basePath, f.key];
     const key = fieldPath.join('.');
-    if (f.type === 'section') return renderSection(f, fieldPath); // nested
+
+    // --- CONDITIONALS
+    const ctx = { root: data, section: row, row } as const;
+    const isVisible = evalCondition((f as any).visibleWhen, ctx);
+    if (!isVisible) {
+      const clear = (f as any).clearWhenHidden;
+      if (clear) {
+        const valHere = getNestedValue(data, fieldPath);
+        const defaultVal = defaultValueForType((f as any).type);
+        const needsClear = valHere !== undefined && JSON.stringify(valHere) !== JSON.stringify(defaultVal);
+        if (needsClear) {
+          flushSection(sectionKey).finally(async () => {
+            const op = (clear === 'hard')
+              ? [{ op: 'remove', path: ptrFromPath(fieldPath) }]
+              : [{ op: 'add', path: ptrFromPath(fieldPath), value: defaultVal }];
+            await onPatch(sectionKey, op);
+          });
+        }
+      }
+      return null;
+    }
+
+    const enabled = evalCondition((f as any).enabledWhen, ctx);
+    const required = (f as any).required === true || evalCondition((f as any).requiredWhen, ctx);
+    const readOnly = isReadOnly || !enabled;
+
+    if ((f as any).type === 'section') return renderSection(f as any, fieldPath); // nested
 
     return (
       <FieldRenderer
@@ -81,15 +108,12 @@ const InstanceFormRenderer = forwardRef<InstanceFormRendererRef, Props>(function
         path={fieldPath}
         formState={data}
         localContext={row}
+        handleChange={(path, value) => { if (!readOnly) schedule(sectionKey, path, value); }}
+        readOnly={readOnly}
+        error={undefined}
         activeDateKey={null}
         setActiveDateKey={() => {}}
-        readOnly={isReadOnly}
-        error={undefined}
         registerFieldPosition={() => {}}
-        handleChange={async (path, value) => {
-          if (isReadOnly) return;
-          schedule(sectionKey, path, value);
-        }}
       />
     );
   });
@@ -98,6 +122,8 @@ const InstanceFormRenderer = forwardRef<InstanceFormRendererRef, Props>(function
     const sectionKey = String(path[0]);
     const pathKey = path.join('.');
     const sectionReadOnly = readOnlyGlobal || !editableSections.includes(sectionKey);
+    const sectionVisible = evalCondition((section as any).visibleWhen, { root: data, section: getNestedValue(data, path) ?? {}, row: getNestedValue(data, path) ?? {} });
+    if (!sectionVisible) return null;
 
     // Repeatable
     if (section.repeatable) {
