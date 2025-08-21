@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, FlatList } from "react-native";
-import { List } from "react-native-paper";
+import { List, IconButton } from "react-native-paper";
 import { useNetInfo } from "@react-native-community/netinfo";
 
 import FloatingCreateFab from "../components/FloatingCreateFab";
@@ -17,6 +17,17 @@ export default function FormsScreen({ navigation }: any) {
   useEffect(() => {
     getFormTemplatesCached(online).then(setTemplates);
   }, [online]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <IconButton
+          icon="cog"
+          onPress={() => navigation.navigate("Settings")}
+        />
+      ),
+    });
+  }, [navigation]);
 
   const handleCreate = async (tpl: FormDefinition) => {
     const res = await createInstanceSmart(
